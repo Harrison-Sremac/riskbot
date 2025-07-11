@@ -1,5 +1,6 @@
-import smtplib
+# send.py
 from email.message import EmailMessage
+import smtplib
 import os
 from dotenv import load_dotenv
 
@@ -7,16 +8,22 @@ load_dotenv()
 
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
-TO_EMAIL = os.getenv("TO_EMAIL")
+EMAIL_TO = os.getenv("EMAIL_TO")
 
 def send_email(subject, body):
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = EMAIL_USER
-    msg["To"] = TO_EMAIL
-    msg.set_content(body)
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = EMAIL_USER
+        msg["To"] = EMAIL_TO
+        msg.set_content("This message requires an HTML-capable email client.")
+        msg.add_alternative(body, subtype='html')
 
-    with smtplib.SMTP_SSL("smtp.office365.com", 465) as smtp:
-        smtp.login(EMAIL_USER, EMAIL_PASS)
-        smtp.send_message(msg)
-        print("email sent")
+        with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+            smtp.starttls()
+            smtp.login(EMAIL_USER, EMAIL_PASS)
+            smtp.send_message(msg)
+            print("Email sent!")
+    except Exception as e:
+        print(" Failed to send email:", e)
+
