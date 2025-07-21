@@ -1,12 +1,19 @@
 from emailer.send import send_email
 
 # Example alert data
-alert = {
+alert1 = {
     "vendor": "vendor_name",
     "risk_level": "High",
     "issue": "Exposed S3 bucket with public access",
     "impact": "Sensitive customer data at risk",
     "timestamp": "2025-07-11 12:30 UTC"
+}
+alert = {
+    "vendor": "Dad",
+    "risk_level": "Extremely High",
+    "issue": "Suspiciously empty snack drawer",
+    "impact": "Family morale dangerously low",
+    "timestamp": "2025-07-11 14:02 UTC"
 }
 
 subject = f" {alert['risk_level']} Risk Alert: {alert['vendor']}"
@@ -23,5 +30,5 @@ body = f"""
   </body>
 </html>
 """
-
-send_email(subject=subject, body=body)
+for index in range(1):
+    send_email(subject=subject, body=body)

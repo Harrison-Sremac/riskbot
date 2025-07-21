@@ -1,7 +1,7 @@
 # run.py
 
-from flask import Flask
-from blackkite.webhook_server.webhook import webhook_bp
+from flask import Flask # type: ignore
+from webhook import webhook_bp
 
 app = Flask(__name__)
 app.register_blueprint(webhook_bp)
