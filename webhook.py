@@ -40,12 +40,24 @@ def webhook():
         company = data.get("CompanyName", "Unknown")
         findings = data.get("Findings", [])
 
-        subject = f"[{event}] Update for {company}"
+        subject = f"[{event or 'Unknown Event'}] Update for {company}"
 
         # CASE: Finding Alert
         if findings:
             finding = findings[0]
+            # Ensure all required fields are present for downstream functions
             finding["CompanyName"] = company
+            finding.setdefault("InsertDate", timestamp)
+            finding.setdefault("Title", "No Title")
+            finding.setdefault("Module", "Unknown")
+            finding.setdefault("Severity", "Unknown")
+            finding.setdefault("ControlId", "N/A")
+            finding.setdefault("Url", "")
+            # Log any missing/None fields for debugging
+            required_fields = ["Title", "Module", "Severity", "ControlId", "Url"]
+            for field in required_fields:
+                if finding.get(field) is None:
+                    print(f"Warning: Field '{field}' is None in finding: {finding}")
 
             alert_text = f"""
 Event: {event}
@@ -53,15 +65,15 @@ Company: {company}
 Timestamp: {timestamp}
 
 Finding:
-- Title: {finding.get("Title", "N/A")}
-- Module: {finding.get("Module", "N/A")}
-- Severity: {finding.get("Severity", "N/A")}
-- Control ID: {finding.get("ControlId", "N/A")}
-- URL: {finding.get("Url", "N/A")}
+- Title: {finding.get("Title") or 'No Title'}
+- Module: {finding.get("Module") or 'Unknown'}
+- Severity: {finding.get("Severity") or 'Unknown'}
+- Control ID: {finding.get("ControlId") or 'N/A'}
+- URL: {finding.get("Url") or ''}
 """
             summary = rewrite_alert_with_openai(alert_text)
             html_body = generate_html_email(summary, finding)
-            subject = f"[{finding.get('Severity', 'Unknown')}] New Finding for {company}: {finding.get('Title', 'No Title')}"
+            subject = f"[{finding.get('Severity') or 'Unknown'}] New Finding for {company}: {finding.get('Title') or 'No Title'}"
 
         # CASE: Focus Tag Trigger
         elif event == "TestFocusTagIsAssociatedWithACompany" and data.get("Tags"):

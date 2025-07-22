@@ -52,7 +52,20 @@ Here’s the raw alert text. Write a friendly, professional paragraph to place a
    
 
 def generate_html_email(summary_text, finding):
-    return f"""
+    event_type = finding.get("EventType", "").lower()
+    header_html = f"<h2>Security Alert – {finding.get('CompanyName', 'Client')}{f' ({event_type.title()})' if event_type else ''}</h2>"
+    
+    prefix = ""
+    if "ransomware" in event_type:
+        prefix = "Ransomware Susceptibility Alert: "
+    elif "focus" in event_type:
+        prefix = "Tag Association Notice: "
+    elif "finding" in event_type:
+        prefix = "New Finding Alert: "
+    
+    body_paragraph = f"<p>{prefix}{summary_text}</p>"
+    
+    html_template = f"""
     <!DOCTYPE html>
     <html>
     <head>
@@ -96,11 +109,11 @@ def generate_html_email(summary_text, finding):
            alt="RiskBot Logo" 
            style="max-width: 100px; display: block; margin-bottom: 20px;" />
 
-      <h2>Security Alert – {finding.get("CompanyName", "Client")}</h2>
+      {header_html}
 
       <p>Dear {finding.get("CompanyName", "Client")},</p>
 
-      <p>{summary_text}</p>
+      {body_paragraph}
 
       <table>
         <tr>
@@ -158,3 +171,4 @@ def generate_html_email(summary_text, finding):
     </body>
     </html>
     """
+    return html_template
