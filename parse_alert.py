@@ -62,31 +62,37 @@ def generate_html_email(summary_text, finding):
                style="max-width: 120px; display: block; margin: 0 auto 20px;" />
 
           <h2 style='color: #d9534f; text-align: center;'>🚨 Security Alert Notification</h2>
-          <p style='font-size: 16px;'>
-            Hello Team,<br><br>
-            {summary_text}<br><br>
-            Please visit the link provided for more detailed information.
-          </p>
+          <div style="margin-top: 20px; margin-bottom: 20px;">
+                      <p style='font-size: 16px;'>
+                        Hello Team,<br><br>
+                        {summary_text}<br><br>
+                        Please visit the link provided for more detailed information.
+                    </p>
+          </div>
 
           <hr style='margin: 30px 0;'>
 
           <h3 style='color: #333;'>🔍 Alert Overview</h3>
-          <table style='width: 100%; font-size: 14px; border-collapse: collapse;'>
-            <tr><td style='padding: 8px 0; font-weight: bold;'>Date:</td><td>{finding.get('InsertDate', 'N/A')}</td></tr>
-            <tr><td style='padding: 8px 0; font-weight: bold;'>Vendor:</td><td>{finding.get('Vendor', 'Unknown')}</td></tr>
-            <tr><td style='padding: 8px 0; font-weight: bold;'>Category:</td><td>{finding.get('Module', 'N/A')}</td></tr>
-            <tr><td style='padding: 8px 0; font-weight: bold;'># of Findings:</td><td>1</td></tr>
-            <tr><td style='padding: 8px 0; font-weight: bold;'>Focus Tag:</td><td>{finding.get('FocusTag', 'General')}</td></tr>
-            <tr><td style='padding: 8px 0; font-weight: bold;'>Severity:</td>
-                <td>
-                    <span style="display: inline-block; background-color: {'#dc3545' if finding.get('Severity') == 'Critical' else '#ffc107'}; color: white; padding: 4px 8px; border-radius: 4px;">
-                        {finding.get('Severity', 'Unknown')}
-                    </span>
-                </td>
-            </tr>
-            <tr><td style='padding: 8px 0; font-weight: bold;'>Description:</td><td>{finding.get('Title')}</td></tr>
-            <tr><td style='padding: 8px 0; font-weight: bold;'>Recommended Action:</td><td>{finding.get('RecommendedAction', 'Please review and address promptly.')}</td></tr>
-            <tr><td style='padding: 8px 0; font-weight: bold;'>Notes:</td><td>{finding.get('Notes', 'No additional notes.')}</td></tr>
+          <table style="width: 100%; border: 1px solid #ddd; border-radius: 6px; background-color: #fdfdfd; padding: 10px;">
+            <tr><td colspan="2">
+              <table style="width: 100%; font-size: 14px; border-spacing: 0 8px;">
+                <tr><td style='padding: 8px 0; font-weight: bold;'>Date:</td><td>{finding.get('InsertDate', 'N/A')}</td></tr>
+                <tr><td style='padding: 8px 0; font-weight: bold;'>Vendor:</td><td>{finding.get('Vendor', 'Unknown')}</td></tr>
+                <tr><td style='padding: 8px 0; font-weight: bold;'>Category:</td><td>{finding.get('Module', 'N/A')}</td></tr>
+                <tr><td style='padding: 8px 0; font-weight: bold;'># of Findings:</td><td>1</td></tr>
+                <tr><td style='padding: 8px 0; font-weight: bold;'>Focus Tag:</td><td>{finding.get('FocusTag', 'General')}</td></tr>
+                <tr><td style='padding: 8px 0; font-weight: bold;'>Severity:</td>
+                    <td>
+                        <span style="display: inline-block; background-color: {'#dc3545' if finding.get('Severity') == 'Critical' else '#ffc107'}; color: white; padding: 4px 8px; border-radius: 4px;">
+                            {finding.get('Severity', 'Unknown')}
+                        </span>
+                    </td>
+                </tr>
+                <tr><td style='padding: 8px 0; font-weight: bold;'>Description:</td><td>{finding.get('Title')}</td></tr>
+                <tr><td style='padding: 8px 0; font-weight: bold;'>Recommended Action:</td><td>{finding.get('RecommendedAction', 'Please review and address promptly.')}</td></tr>
+                <tr><td style='padding: 8px 0; font-weight: bold;'>Notes:</td><td>{finding.get('Notes', 'No additional notes.')}</td></tr>
+              </table>
+            </td></tr>
           </table>
 
           <hr style='margin: 30px 0;'>
