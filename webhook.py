@@ -1,9 +1,9 @@
 #webhook.py
 import os
-from flask import Flask, Blueprint, request, jsonify, abort # type: ignore
+from flask import Flask, Blueprint, request, jsonify, abort  # type: ignore
 from send import send_email
 from parse_alert import rewrite_alert_with_openai, generate_html_email
-from dotenv import load_dotenv # type: ignore
+from dotenv import load_dotenv  # type: ignore
 load_dotenv()
 
 #getting local environment variables
@@ -13,9 +13,7 @@ EMAIL_PASS = os.getenv("EMAIL_PASS")
 EMAIL_TO = os.getenv("EMAIL_TO")
 
 
-
 webhook_bp = Blueprint("webhook", __name__)
-
 
 def verify_webhook_secret(req):
     token = req.headers.get("X-BlackKite-Webhook-Api-Key")
@@ -24,7 +22,6 @@ def verify_webhook_secret(req):
     if not token or token != WEBHOOK_SECRET:
         print("Webhook secret verification failed")
         abort(403)
-
 
 @webhook_bp.route("/webhook", methods=["POST"])
 def webhook():
@@ -37,41 +34,57 @@ def webhook():
         return jsonify({"error": "No JSON payload"}), 400
 
     try:
-        event = raw_data.get("Event", "No event provided")
-        timestamp = raw_data.get("Timestamp", "No timestamp provided")
+        event = raw_data.get("Event")
+        timestamp = raw_data.get("Timestamp")
         data = raw_data.get("Data") or {}
         company = data.get("CompanyName", "Unknown")
-        findings = data.get("Findings") or [{}]
-        finding = findings[0]
+        findings = data.get("Findings", [])
 
-        # Safely get finding fields with defaults
-        title = finding.get("Title", "No title provided")
-        module = finding.get("Module", "No module provided")
-        severity = finding.get("Severity", "Unknown")
-        control_id = finding.get("ControlId", "N/A")
-        url = finding.get("Url", "#")
+        subject = f"[{event}] Update for {company}"
 
-        # Add company name into finding for email template if needed
-        finding["CompanyName"] = company
+        # CASE: Finding Alert
+        if findings:
+            finding = findings[0]
+            finding["CompanyName"] = company
 
-        alert_text = f"""
+            alert_text = f"""
 Event: {event}
 Company: {company}
 Timestamp: {timestamp}
 
 Finding:
-- Title: {title}
-- Module: {module}
-- Severity: {severity}
-- Control ID: {control_id}
-- URL: {url}
-
+- Title: {finding.get("Title", "N/A")}
+- Module: {finding.get("Module", "N/A")}
+- Severity: {finding.get("Severity", "N/A")}
+- Control ID: {finding.get("ControlId", "N/A")}
+- URL: {finding.get("Url", "N/A")}
 """
+            summary = rewrite_alert_with_openai(alert_text)
+            html_body = generate_html_email(summary, finding)
+            subject = f"[{finding.get('Severity', 'Unknown')}] New Finding for {company}: {finding.get('Title', 'No Title')}"
 
-        summary = rewrite_alert_with_openai(alert_text)
-        html_body = generate_html_email(summary, finding)
+        # CASE: Focus Tag Trigger
+        elif event == "TestFocusTagIsAssociatedWithACompany" and data.get("Tags"):
+            tag_name = data["Tags"][0].get("TagName", "Unknown")
+            url = data.get("Url", "")
+            summary = f"A new focus tag '<strong>{tag_name}</strong>' has been associated with {company}."
+            html_body = generate_html_email(summary, {"CompanyName": company, "InsertDate": timestamp, "Url": url, "Module": "Focus Tag Monitor", "Category": tag_name, "Severity": "Informational", "ControlId": "TAG-001", "FocusTag": tag_name, "Description": f"The tag '{tag_name}' has been newly associated.", "RecommendedAction": ["Review the implications of the tag."], "Notes": ""})
+            subject = f"[Tag Alert] {tag_name} associated with {company}"
 
-        subject = f"[{severity}] New Finding for {company}: {title}"
+        # CASE: RSI Trigger
+        elif event == "TestRansomwareSusIndexIsAboveThreshold":
+            current = data.get("CurrentIndex")
+            previous = data.get("PreviousIndex")
+            url = data.get("Url", "")
+            summary = f"Ransomware Susceptibility Index (RSI) for <strong>{company}</strong> has risen to <strong>{current}</strong> (previous: {previous})."
+            html_body = generate_html_email(summary, {"CompanyName": company, "InsertDate": timestamp, "Url": url, "Module": "RSI Monitor", "Category": "RSI", "Severity": "Medium", "ControlId": "RSI-THRESHOLD", "FocusTag": "RSI", "Description": f"Current RSI is {current}, previously {previous}.", "RecommendedAction": ["Investigate root causes of increased RSI.", "Notify internal stakeholders.", "Review system defenses."], "Notes": ""})
+            subject = f"[RSI Alert] Elevated RSI for {company}"
+
+        else:
+            # Fallback notification
+            summary = f"Webhook event '{event}' received for {company}."
+            html_body = generate_html_email(summary, {"CompanyName": company, "InsertDate": timestamp, "Url": "", "Module": event, "Category": "General", "Severity": "Low", "ControlId": "GEN-001", "FocusTag": "General", "Description": "General webhook event received.", "RecommendedAction": ["Review incoming webhook."], "Notes": "This is a fallback message.", })
+            subject = f"[Notification] Event received for {company}"
 
         send_email(subject, html_body)
         print("Processed webhook and sent email.")
