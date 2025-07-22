@@ -1,6 +1,7 @@
 import os
-from dotenv import load_dotenv
-from openai import OpenAI
+from dotenv import load_dotenv # type: ignore
+from openai import OpenAI   # type: ignore
+
 
 load_dotenv()
 

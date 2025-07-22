@@ -2,7 +2,7 @@
 from email.message import EmailMessage
 import smtplib
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 
 load_dotenv()
 

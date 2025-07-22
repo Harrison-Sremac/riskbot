@@ -1,9 +1,9 @@
 #webhook.py
 import os
-from flask import Flask, Blueprint, request, jsonify, abort
+from flask import Flask, Blueprint, request, jsonify, abort # type: ignore
 from send import send_email
 from parse_alert import rewrite_alert_with_openai, generate_html_email
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 load_dotenv()
 
 #getting local environment variables
