@@ -18,13 +18,12 @@ webhook_bp = Blueprint("webhook", __name__)
 
 
 def verify_webhook_secret(req):
-    # check headers for the secret token
-    token = req.headers.get("X-Webhook-Secret")
+    token = req.headers.get("X-BlackKite-Webhook-Api-Key")
+    print("Expected:", WEBHOOK_SECRET)
+    print("Received:", token)
     if not token or token != WEBHOOK_SECRET:
         print("Webhook secret verification failed")
         abort(403)
-
-
 
 
 @webhook_bp.route("/webhook", methods=["POST"])
@@ -32,40 +31,48 @@ def webhook():
     verify_webhook_secret(request)
 
     raw_data = request.json
+    print("Received JSON:", raw_data)
+
     if not raw_data:
         return jsonify({"error": "No JSON payload"}), 400
 
     try:
-        body = raw_data["webhook_action"]["body"]
-        event = body["Event"]
-        timestamp = body["Timestamp"]
-        company = body["Data"]["CompanyName"]
-        finding = body["Data"]["Findings"][0]  
+        event = raw_data.get("Event", "No event provided")
+        timestamp = raw_data.get("Timestamp", "No timestamp provided")
+        data = raw_data.get("Data") or {}
+        company = data.get("CompanyName", "Unknown")
+        findings = data.get("Findings") or [{}]
+        finding = findings[0]
+
+        # Safely get finding fields with defaults
+        title = finding.get("Title", "No title provided")
+        module = finding.get("Module", "No module provided")
+        severity = finding.get("Severity", "Unknown")
+        control_id = finding.get("ControlId", "N/A")
+        url = finding.get("Url", "#")
+
+        # Add company name into finding for email template if needed
         finding["CompanyName"] = company
 
-        # Build a plain-text summary of the alert
         alert_text = f"""
 Event: {event}
 Company: {company}
 Timestamp: {timestamp}
 
 Finding:
-- Title: {finding["Title"]}
-- Module: {finding["Module"]}
-- Severity: {finding["Severity"]}
-- Control ID: {finding["ControlId"]}
-- URL: {finding["Url"]}
+- Title: {title}
+- Module: {module}
+- Severity: {severity}
+- Control ID: {control_id}
+- URL: {url}
 
 """
 
         summary = rewrite_alert_with_openai(alert_text)
         html_body = generate_html_email(summary, finding)
 
+        subject = f"[{severity}] New Finding for {company}: {title}"
 
-        # Build subject
-        subject = f"[{finding['Severity']}] New Finding for {company}: {finding['Title']}"
-
-        # Send the email
         send_email(subject, html_body)
         print("Processed webhook and sent email.")
 
@@ -74,4 +81,3 @@ Finding:
     except Exception as e:
         print("Error parsing webhook:", e)
         return jsonify({"error": "Invalid payload"}), 400
-
