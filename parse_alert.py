@@ -53,71 +53,108 @@ Here’s the raw alert text. Write a friendly, professional paragraph to place a
 
 def generate_html_email(summary_text, finding):
     return f"""
+    <!DOCTYPE html>
     <html>
-      <body style='font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 30px;'>
-        <div style='max-width: 700px; margin: auto; background-color: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 30px;'>
+    <head>
+      <style>
+        body {{
+          font-family: Arial, sans-serif;
+          color: #2a2a2a;
+          line-height: 1.6;
+          background-color: #f9f9f9;
+          padding: 30px;
+        }}
+        h2 {{
+          color: #c9302c;
+        }}
+        table {{
+          border-collapse: collapse;
+          width: 100%;
+          margin-top: 16px;
+          margin-bottom: 16px;
+        }}
+        th, td {{
+          border: 1px solid #ccc;
+          padding: 12px;
+          text-align: left;
+        }}
+        th {{
+          background-color: #f2f2f2;
+        }}
+        ul {{
+          margin: 12px 0;
+          padding-left: 20px;
+        }}
+        footer {{
+          margin-top: 24px;
+        }}
+      </style>
+    </head>
+    <body>
 
-          <img src="https://i0.wp.com/cgscyberdefense.com/wp-content/uploads/2024/07/cropped-favicon.png?fit=512%2C512&ssl=1"
-               alt="Logo"
-               style="max-width: 120px; display: block; margin: 0 auto 20px;" />
+      <img src="https://i0.wp.com/cgscyberdefense.com/wp-content/uploads/2024/07/cropped-favicon.png?fit=512%2C512&ssl=1" 
+           alt="RiskBot Logo" 
+           style="max-width: 100px; display: block; margin-bottom: 20px;" />
 
-          <h2 style='color: #d9534f; text-align: center;'>🚨 Security Alert Notification</h2>
-          <div style="margin-top: 20px; margin-bottom: 20px;">
-                      <p style='font-size: 16px;'>
-                        Hello Team,<br><br>
-                        {summary_text}<br><br>
-                        Please visit the link provided for more detailed information.
-                    </p>
-          </div>
+      <h2>Security Alert – {finding.get("CompanyName", "Client")}</h2>
 
-          <hr style='margin: 30px 0;'>
+      <p>Dear {finding.get("CompanyName", "Client")},</p>
 
-          <h3 style='color: #333;'>🔍 Alert Overview</h3>
-          <table style="width: 100%; border: 1px solid #ddd; border-radius: 6px; background-color: #fdfdfd; padding: 10px;">
-            <tr><td colspan="2">
-              <table style="width: 100%; font-size: 14px; border-spacing: 0 8px;">
-                <tr><td style='padding: 8px 0; font-weight: bold;'>Date:</td><td>{finding.get('InsertDate', 'N/A')}</td></tr>
-                <tr><td style='padding: 8px 0; font-weight: bold;'>Vendor:</td><td>{finding.get('Vendor', 'Unknown')}</td></tr>
-                <tr><td style='padding: 8px 0; font-weight: bold;'>Category:</td><td>{finding.get('Module', 'N/A')}</td></tr>
-                <tr><td style='padding: 8px 0; font-weight: bold;'># of Findings:</td><td>1</td></tr>
-                <tr><td style='padding: 8px 0; font-weight: bold;'>Focus Tag:</td><td>{finding.get('FocusTag', 'General')}</td></tr>
-                <tr><td style='padding: 8px 0; font-weight: bold;'>Severity:</td>
-                    <td>
-                        <span style="display: inline-block; background-color: {'#dc3545' if finding.get('Severity') == 'Critical' else '#ffc107'}; color: white; padding: 4px 8px; border-radius: 4px;">
-                            {finding.get('Severity', 'Unknown')}
-                        </span>
-                    </td>
-                </tr>
-                <tr><td style='padding: 8px 0; font-weight: bold;'>Description:</td><td>{finding.get('Title')}</td></tr>
-                <tr><td style='padding: 8px 0; font-weight: bold;'>Recommended Action:</td><td>{finding.get('RecommendedAction', 'Please review and address promptly.')}</td></tr>
-                <tr><td style='padding: 8px 0; font-weight: bold;'>Notes:</td><td>{finding.get('Notes', 'No additional notes.')}</td></tr>
-              </table>
-            </td></tr>
-          </table>
+      <p>{summary_text}</p>
 
-          <hr style='margin: 30px 0;'>
+      <table>
+        <tr>
+          <th>Finding Title</th>
+          <td>{finding.get("Title")}</td>
+        </tr>
+        <tr>
+          <th>Severity</th>
+          <td>{finding.get("Severity", "Unknown")}</td>
+        </tr>
+        <tr>
+          <th>Number of Findings</th>
+          <td>{len(finding.get("RelatedFindings", [finding]))}</td>
+        </tr>
+        <tr>
+          <th>Module</th>
+          <td>{finding.get("Module", "N/A")}</td>
+        </tr>
+        <tr>
+          <th>Control ID</th>
+          <td>{finding.get("ControlId", "N/A")}</td>
+        </tr>
+        <tr>
+          <th>Description</th>
+          <td>{finding.get("Description", "N/A")}</td>
+        </tr>
+        <tr>
+          <th>Notes</th>
+          <td>{finding.get("Notes", "N/A")}</td>
+        </tr>
+        <tr>
+          <th>View Finding</th>
+          <td><a href="{finding.get("Url", "#")}" style="color: #0275d8;">Open in Dashboard</a></td>
+        </tr>
+      </table>
 
-          <h3 style='color: #333;'>🔗 View in Workflow Dashboard</h3>
-          <p style='font-size: 14px;'>
-            You can view and take action on this alert directly in the live workflow dashboard.
-          </p>
-          <div style='text-align: center; margin-top: 20px;'>
-            <a href="{finding.get('Url', '#')}"
-               style='background-color: #0275d8; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;'>
-              Open Alert Dashboard
-            </a>
-          </div>
+      <p>To address this finding, we recommend the following actions:</p>
+      <ul>
+        {"".join(f"<li>{action}</li>" for action in finding.get("RecommendedAction", []))}
+      </ul>
 
-          <div style='margin-top: 30px; font-size: 13px; color: #555;'>
-            <p><strong>Status options you can mark in the dashboard:</strong></p>
-            <ul style='margin-left: 20px;'>
-              <li>🟡 <strong>Not yet reviewed</strong></li>
-              <li>🛠️ <strong>Working on it</strong></li>
-              <li>✅ <strong>Patched</strong></li>
-            </ul>
-            <p>This email was generated by RiskBot Security Automation.</p>
-          </div>
-        </div>
-      </body>
+      <p>
+        CGS Cyber Defense is committed to helping you maintain a secure environment. If you have any questions or require further assistance, please do not hesitate to contact us.
+      </p>
+
+      <footer>
+        <p>Sincerely,</p>
+        <p>
+          Harrison Sremac<br>
+          CGS Intern<br>
+          <strong>CGS Cyber Defense</strong>
+        </p>
+      </footer>
+
+    </body>
     </html>
     """
