@@ -1,4 +1,4 @@
-from emailer.send import send_email
+from send import send_email
 
 # Example alert data
 alert1 = {
